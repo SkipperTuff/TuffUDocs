@@ -653,17 +653,67 @@ Options = {"1","2","3"}
 <div class="code-block">
 <div class="code-head">
 <span>Lua</span>
-<button class="copy-btn" data-copy='local Window = Library:CreateWindow("Example")
+<button class="copy-btn" data-copy='local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/SkipperTuff/TuffUiLibrary/main/Main"))()
+
+local Window = Library:CreateWindow("Tuff UI Example")
+
 local Main = Window:AddTab("Main")
-Main:AddButton("Test", function()
-print("works")
-end)'>Copy</button>
+local Settings = Window:AddTab("Settings")
+
+Library:Notify("Loaded")
+
+Main:AddParagraph("Welcome", "This is an example script.")
+
+-- If you have a discord server
+Main:AddButton("Copy Discord", function()
+    if setclipboard then
+        setclipboard("https://discord.gg/yourinvite")
+    end
+end, "copies your invite")
+
+
+Main:AddButton("Button", function()
+    print("Button clicked")
+end, "basic button")
+
+Main:AddToggle("Toggle", {
+    Default = false,
+    Callback = function(state)
+        print("Toggle:", state)
+    end
+}, "on / off switch")
+
+Main:AddSlider("Slider", {
+    Min = 0,
+    Max = 100,
+    Default = 50,
+    Increment = 1,
+    Callback = function(value)
+        print("Slider:", value)
+    end
+}, "number value")
+
+Main:AddDropdown("Dropdown", {
+    Options = {"1","2","3","4","5"},
+    Default = "1",
+    Callback = function(option)
+        print("Dropdown:", option)
+    end
+}, "pick an option")
+
+Main:AddInput("Input", "Type here...", function(text)
+    print("Input:", text)
+end, "text box")
+
+Settings:AddButton("Destroy UI", function()
+    Window:Destroy()
+end, "close the ui")'>Copy</button>
 </div>
 <pre>local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/SkipperTuff/TuffUiLibrary/main/Main"))()
 
 local Window = Library:CreateWindow("Tuff UI Example")
 
-local Main = Window:AddTab("Main"),
+local Main = Window:AddTab("Main")
 local Settings = Window:AddTab("Settings")
 
 Library:Notify("Loaded")
