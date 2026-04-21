@@ -45,6 +45,9 @@ grid-template-columns:var(--sidebar) 1fr;
 min-height:100vh;
 }
 
+
+
+
 /* SIDEBAR */
 .sidebar{
 position:sticky;
@@ -430,7 +433,6 @@ transition:.25s;
 </style>
 </head>
 <body>
-
 <div class="app">
 
 <!-- SIDEBAR -->
@@ -488,6 +490,7 @@ transition:.25s;
 <div class="chips">
 <a href="#quickstart" class="chip">Get Started</a>
 <a href="#preview" class="chip">Preview</a>
+<a href="https://discord.gg/fgukyz7tPM" target="_blank" class="chip">Discord</a>
 </div>
 </div>
 
@@ -504,6 +507,7 @@ Tuff UI is currently in beta and improving fast. A modern Roblox UI library buil
 <div class="hero-actions">
 <a href="#quickstart" class="btn primary">Get Started</a>
 <a href="#preview" class="btn">Live Preview</a>
+<a href="https://discord.gg/fgukyz7tPM" target="_blank" class="btn">Join Discord</a>
 </div>
 </section>
 
@@ -780,9 +784,98 @@ end, "close the ui")</pre>
 </div>
 
 <div class="footer">
-Made for Tuff UI • Premium Documentation
+Made for Tuff UI
 </div>
+<!-- COMMUNITY -->
+<section class="doc-section" id="community">
+  <h3>Community</h3>
+  <p>Leave feedback, suggestions, or questions below.</p>
 
+  <div style="margin-top:20px">
+    <div style="background:var(--code);border:1px solid var(--border);border-radius:18px;padding:20px;margin-bottom:20px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+        <input id="c-name" type="text" placeholder="Name" style="padding:12px 14px;background:var(--panel2);border:1px solid var(--border);border-radius:12px;color:var(--text);outline:none;font-family:inherit;font-size:.92rem">
+        <input id="c-tag" type="text" placeholder="Tag (e.g. feedback, bug)" style="padding:12px 14px;background:var(--panel2);border:1px solid var(--border);border-radius:12px;color:var(--text);outline:none;font-family:inherit;font-size:.92rem">
+      </div>
+      <textarea id="c-msg" rows="4" placeholder="Write your message..." style="width:100%;padding:12px 14px;background:var(--panel2);border:1px solid var(--border);border-radius:12px;color:var(--text);outline:none;font-family:inherit;font-size:.92rem;resize:vertical"></textarea>
+      <button onclick="postComment()" style="margin-top:12px;padding:11px 20px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#111;border:none;border-radius:12px;font-weight:800;font-size:.92rem;cursor:pointer">Post →</button>
+    </div>
+    <div id="comments-list" style="display:grid;gap:12px"></div>
+  </div>
+</section>
+
+<script>
+const BACKEND = "https://api.jsonbin.io/v3/b";
+const BIN_KEY = "$2a$10$4OihHm/pOtI0j0cCnH7U6.AwAzXQ8Pe.NqlGxif1MaGRwpmRWyeJu"; // see step below
+let BIN_ID = "69e73b94856a68218957df4b";
+
+async function getComments() {
+  if (!BIN_ID) return [];
+  const res = await fetch(`${BACKEND}/${BIN_ID}/latest`, {
+    headers: { "X-Master-Key": BIN_KEY }
+  });
+  const data = await res.json();
+  return data.record.comments || [];
+}
+
+async function saveComments(comments) {
+  await fetch(`${BACKEND}/${BIN_ID}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json", "X-Master-Key": BIN_KEY },
+    body: JSON.stringify({ comments })
+  });
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+async function renderComments() {
+  const list = document.getElementById('comments-list');
+  list.innerHTML = '<p style="color:var(--muted);font-size:.9rem;text-align:center;padding:20px 0">Loading...</p>';
+  const comments = await getComments();
+  if (!comments.length) {
+    list.innerHTML = '<p style="color:var(--muted);font-size:.9rem;text-align:center;padding:20px 0">No comments yet — be the first!</p>';
+    return;
+  }
+  list.innerHTML = comments.slice().reverse().map(c => `
+    <div style="background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:18px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;color:#111">${(c.name||'A')[0].toUpperCase()}</div>
+          <div>
+            <strong style="font-size:.95rem">${escHtml(c.name||'Anonymous')}</strong>
+            ${c.tag ? `<span style="margin-left:8px;padding:3px 9px;background:rgba(255,122,26,.15);color:var(--accent);border-radius:999px;font-size:.75rem;font-weight:700">${escHtml(c.tag)}</span>` : ''}
+          </div>
+        </div>
+        <span style="color:var(--muted);font-size:.8rem">${c.date}</span>
+      </div>
+      <p style="color:var(--muted);line-height:1.7;white-space:pre-wrap">${escHtml(c.message)}</p>
+    </div>
+  `).join('');
+}
+
+async function postComment() {
+  const name = document.getElementById('c-name').value.trim();
+  const tag = document.getElementById('c-tag').value.trim();
+  const message = document.getElementById('c-msg').value.trim();
+  if (!message) return;
+  const comments = await getComments();
+  comments.push({
+    name: name || 'Anonymous',
+    tag,
+    message,
+    date: new Date().toLocaleDateString('en-GB', {day:'numeric',month:'short',year:'numeric'})
+  });
+  await saveComments(comments);
+  document.getElementById('c-name').value = '';
+  document.getElementById('c-tag').value = '';
+  document.getElementById('c-msg').value = '';
+  renderComments();
+}
+
+renderComments();
+</script>    
 </main>
 </div>
 </div>
