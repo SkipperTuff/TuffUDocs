@@ -960,7 +960,7 @@ async function loadStats() {
     }
 
     document.getElementById("onlineCount").textContent = online;
-    document.getElementById("totalCount").textContent = data.totalLoads || 0;
+    document.getElementById("totalLoads").textContent = data.totalLoads || 0;
 
   } catch(e) {
     console.log("stats failed");
