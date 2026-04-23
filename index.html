@@ -485,11 +485,10 @@ transition:.25s;
 <div class="chip">Tuff UI v1</div>
 </div>
 
-<div class="card">
+<section class="doc-section">
   <h3>Live Stats</h3>
   <p>Currently Using: <span id="onlineCount">0</span></p>
-  <p>Total Loads: <span id="totalLoads">0</span></p>
-</div>
+</section>
     
 <button class="menu-btn" id="menuBtn">Menu</button>
 
@@ -932,5 +931,77 @@ if(window.innerWidth<980) sidebar.classList.remove("open");
 });
 </script>
 
+  <script>
+let realCount = 0;
+let shownCount = 0;
+
+let lastChange = Date.now();
+let boostActive = false;
+let boostStart = 0;
+let boostedTarget = 0;
+
+// replace with your real backend url
+const API_URL = "YOUR_API_URL";
+
+async function fetchStats() {
+  try {
+    const res = await fetch(API_URL);
+    const data = await res.json();
+
+    const newReal = Number(data.online || 0);
+
+    if (newReal !== realCount) {
+      realCount = newReal;
+      lastChange = Date.now();
+      boostActive = false;
+    }
+  } catch (e) {
+    console.log("stats failed");
+  }
+}
+
+function updateDisplay() {
+  const now = Date.now();
+
+  // If same number for 10 mins, start fake boost
+  if (!boostActive && now - lastChange > 10 * 60 * 1000) {
+    boostActive = true;
+    boostStart = now;
+    boostedTarget = realCount + Math.floor(Math.random() * 20) + 1;
+  }
+
+  let target = realCount;
+
+  if (boostActive) {
+    const elapsed = now - boostStart;
+    const total = 2 * 60 * 60 * 1000; // 2 hours
+
+    if (elapsed < total) {
+      const progress = elapsed / total;
+      target = Math.round(
+        boostedTarget - (boostedTarget - realCount) * progress
+      );
+    } else {
+      boostActive = false;
+      target = realCount;
+      lastChange = now;
+    }
+  }
+
+  // smooth movement
+  if (shownCount < target) shownCount++;
+  else if (shownCount > target) shownCount--;
+
+  document.getElementById("onlineCount").textContent = shownCount;
+}
+
+// fetch real stats every minute
+fetchStats();
+setInterval(fetchStats, 60000);
+
+// animate display every second
+setInterval(updateDisplay, 1000);
+</script>
+  
 </body>
 </html>
