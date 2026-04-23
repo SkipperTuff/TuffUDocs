@@ -485,10 +485,11 @@ transition:.25s;
 <div class="chip">Tuff UI v1</div>
 </div>
 
-<section class="doc-section">
+<div class="card">
   <h3>Live Stats</h3>
   <p>Currently Using: <span id="onlineCount">0</span></p>
-</section>
+  <p>Total Loads: <span id="totalLoads">0</span></p>
+</div>
     
 <button class="menu-btn" id="menuBtn">Menu</button>
 
@@ -931,76 +932,43 @@ if(window.innerWidth<980) sidebar.classList.remove("open");
 });
 </script>
 
-  <script>
-let realCount = 0;
-let shownCount = 0;
+<script>
+const BIN_ID = "69e9eed6aaba8821972c0b86";
+const API_KEY = "$2a$10$4OihHm/pOtI0j0cCnH7U6.AwAzXQ8Pe.NqlGxif1MaGRwpmRWyeJu";
 
-let lastChange = Date.now();
-let boostActive = false;
-let boostStart = 0;
-let boostedTarget = 0;
-
-// replace with your real backend url
-const API_URL = "YOUR_API_URL";
-
-async function fetchStats() {
+async function loadStats() {
   try {
-    const res = await fetch(API_URL);
-    const data = await res.json();
+    const res = await fetch(
+      `https://api.jsonbin.io/v3/b/${BIN_ID}/latest`,
+      {
+        headers: {
+          "X-Master-Key": API_KEY
+        }
+      }
+    );
 
-    const newReal = Number(data.online || 0);
+    const json = await res.json();
+    const data = json.record;
 
-    if (newReal !== realCount) {
-      realCount = newReal;
-      lastChange = Date.now();
-      boostActive = false;
+    const sessions = data.sessions || {};
+    const now = Math.floor(Date.now()/1000);
+
+    let online = 0;
+
+    for (const id in sessions) {
+      if (now - sessions[id] <= 90) online++;
     }
-  } catch (e) {
+
+    document.getElementById("onlineCount").textContent = online;
+    document.getElementById("totalCount").textContent = data.totalLoads || 0;
+
+  } catch(e) {
     console.log("stats failed");
   }
 }
 
-function updateDisplay() {
-  const now = Date.now();
-
-  // If same number for 10 mins, start fake boost
-  if (!boostActive && now - lastChange > 10 * 60 * 1000) {
-    boostActive = true;
-    boostStart = now;
-    boostedTarget = realCount + Math.floor(Math.random() * 20) + 1;
-  }
-
-  let target = realCount;
-
-  if (boostActive) {
-    const elapsed = now - boostStart;
-    const total = 2 * 60 * 60 * 1000; // 2 hours
-
-    if (elapsed < total) {
-      const progress = elapsed / total;
-      target = Math.round(
-        boostedTarget - (boostedTarget - realCount) * progress
-      );
-    } else {
-      boostActive = false;
-      target = realCount;
-      lastChange = now;
-    }
-  }
-
-  // smooth movement
-  if (shownCount < target) shownCount++;
-  else if (shownCount > target) shownCount--;
-
-  document.getElementById("onlineCount").textContent = shownCount;
-}
-
-// fetch real stats every minute
-fetchStats();
-setInterval(fetchStats, 60000);
-
-// animate display every second
-setInterval(updateDisplay, 1000);
+loadStats();
+setInterval(loadStats, 15000);
 </script>
   
 </body>
